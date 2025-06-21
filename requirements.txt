@@ -1,0 +1,10 @@
+requests
+pandas
+openpyxl
+folium
+SQLAlchemy
+geopy
+xyzservices
+schedule
+xlsxwriter
+Pillow
