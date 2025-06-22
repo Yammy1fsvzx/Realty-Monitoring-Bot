@@ -52,7 +52,7 @@ SCHEDULE_TIMES = ["08:00"]
 # --- 4. Настройки Email ---
 # Настройки для Email теперь берутся из переменных окружения
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_SENDER = os.getenv("EMAIL_SENDER", "Andrrrrrew89@ya.ru")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "jpnslnzazyvsebmb")
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "solodim1@ya.ru")
+RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "n1xu1@yandex.ru")
