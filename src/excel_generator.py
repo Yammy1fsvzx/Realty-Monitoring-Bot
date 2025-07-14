@@ -8,6 +8,9 @@ from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment
+import mimetypes
+mimetypes.add_type('image/webp', '.webp')
+from PIL import Image as PILImage
 
 # Путь для сохранения отчетов
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
@@ -116,24 +119,40 @@ def create_excel_report(listings: list[dict]) -> Path | None:
             try:
                 response = requests.get(photo_url, timeout=15)
                 response.raise_for_status()
-                
                 img_data = io.BytesIO(response.content)
-                img = Image(img_data)
-                
+
+                # Определяем формат изображения
+                img_data.seek(0)
+                try:
+                    pil_img = PILImage.open(img_data)
+                    if pil_img.format and pil_img.format.lower() == "webp":
+                        # Конвертируем webp в png
+                        png_img_data = io.BytesIO()
+                        pil_img.save(png_img_data, format="PNG")
+                        png_img_data.seek(0)
+                        img = Image(png_img_data)
+                    else:
+                        img_data.seek(0)
+                        img = Image(img_data)
+                except Exception as e:
+                    print(f"Не удалось обработать изображение (PIL): {e}")
+                    img_cell.value = "Ошибка загрузки"
+                    continue
+
                 # Масштабируем изображение, чтобы оно вписалось в ячейку с отступами
                 cell_height = 150 # ~120*1.25
                 cell_width = 200  # ~30*6.5
-                
+
                 scale_h = cell_height / img.height
                 scale_w = cell_width / img.width
                 scale = min(scale_h, scale_w)
 
                 img.height = img.height * scale
                 img.width = img.width * scale
-                
+
                 # Центрируем изображение в ячейке
                 img.anchor = f'{photo_col_letter}{row_num}'
-                
+
                 ws.add_image(img)
 
             except Exception as e:
