@@ -6,9 +6,10 @@ import os
 from config import EMAIL_SENDER, EMAIL_PASSWORD, RECIPIENT_EMAIL, SMTP_SERVER, SMTP_PORT
 from pathlib import Path
 
-def send_email_with_reports(subject, recipient_email, excel_path, map_path):
+def send_email_with_reports(subject, recipient_email, excel_path, map_path, city=None):
     """
     Отправляет email с отчетами (Excel и карта) в виде вложений.
+    city: название города (для текста письма)
     """
     # --- Создание сообщения ---
     msg = MIMEMultipart()
@@ -16,11 +17,12 @@ def send_email_with_reports(subject, recipient_email, excel_path, map_path):
     msg['To'] = recipient_email
     msg['Subject'] = subject
 
+    city_text = f"<b>{city}</b>" if city else "вашем городе"
     html_body = f"""
     <html>
         <body>
             <p>Здравствуйте!</p>
-            <p>Новые объявления о продаже коммерческой недвижимости в Санкт-Петербурге.</p>
+            <p>Новые объявления о продаже коммерческой недвижимости в {city_text}.</p>
             <p>Отчет с детальной информацией (Excel) и интерактивная карта (HTML) приложены к этому письму.</p>
             <p>Для просмотра карты, пожалуйста, скачайте приложенный файл <b>{Path(map_path).name}</b> и откройте его в вашем веб-браузере.</p>
             <br>

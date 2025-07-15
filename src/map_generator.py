@@ -47,16 +47,15 @@ def _get_coordinates_list(address: str, ad_coords: dict | None) -> list[float] |
         print(f"Ошибка геокодирования: {e}")
         return None
 
-def create_interactive_map(listings: list[dict]) -> Path:
+def create_interactive_map(listings: list[dict], city: str = "") -> Path:
     """
     Создает интерактивную HTML карту с помощью Folium.
     Возвращает путь к созданной карте.
+    city: название города (для имени файла)
     """
-    # Центрируем карту на первой точке или на центре СПб, если список пуст
     map_center = listings[0]['coords'] if listings else SPB_CENTER_COORDS
     m = folium.Map(location=map_center, zoom_start=11)
 
-    # Добавляем маркеры на карту
     for loc in listings:
         folium.Marker(
             location=loc['coords'],
@@ -64,19 +63,20 @@ def create_interactive_map(listings: list[dict]) -> Path:
             tooltip=loc['address']
         ).add_to(m)
 
-    # Сохраняем карту в HTML файл
     REPORTS_DIR.mkdir(exist_ok=True)
-    
-    map_filename = f"map_{time.strftime('%Y%m%d_%H%M%S')}.html"
+    # Имя файла теперь только дата и время
+    map_filename = f"{time.strftime('%Y-%m-%d_%H%M%S')}.html"
     map_path = REPORTS_DIR / map_filename
     m.save(map_path)
     print(f"Интерактивная карта создана: {map_path}")
     return map_path
 
-def create_map_report(listings: list[dict], all_ads_data: list[dict]) -> str | None:
+
+def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str = "") -> str | None:
     """
     Главная функция: создает интерактивную карту.
     Возвращает путь к интерактивной карте.
+    city: название города (для имени файла)
     """
     if not listings:
         print("Нет данных для создания карты.")
@@ -92,13 +92,9 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict]) -> str | N
         coords_list = _get_coordinates_list(ad['address'], full_ad_data.get('coords') if full_ad_data else None)
         
         if coords_list:
-            # Форматируем цены для вывода
             formatted_price_per_sqm = _format_price(ad['price_per_sqm'])
             formatted_price = _format_price(ad['price'])
-
             description = ad.get('description', '')
-
-            # Формируем HTML для картинки, если она есть
             image_html = ''
             if ad.get('image_url'):
                 image_html = f'''
@@ -108,8 +104,6 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict]) -> str | N
                     </a>
                 </div>
                 '''
-
-            # --- Создаем красивый HTML для попапа (2 колонки) ---
             popup_html = f"""
             <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; width: 450px;">
                 <div style="width: {'50%' if image_html else '100%'}; float: left; padding-right: {'10px' if image_html else '0'}; box-sizing: border-box;">
@@ -139,7 +133,7 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict]) -> str | N
         print("Не удалось определить координаты ни для одного объекта. Карта не будет создана.")
         return None
 
-    interactive_map_path = create_interactive_map(listings_with_coords_and_popup)
+    interactive_map_path = create_interactive_map(listings_with_coords_and_popup, city=city)
     
     return str(interactive_map_path)
 

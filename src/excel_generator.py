@@ -39,10 +39,11 @@ def _format_price(price: float) -> str:
     else:
         return f"{int(price)} руб."
 
-def create_excel_report(listings: list[dict]) -> Path | None:
+def create_excel_report(listings: list[dict], city: str = "") -> Path | None:
     """
     Создает Excel-отчет, скачивает изображения и вставляет их в ячейки,
     используя openpyxl для финальной обработки.
+    city: название города (для имени файла)
     """
     if not listings:
         print("Нет данных для создания Excel-отчета.")
@@ -68,7 +69,8 @@ def create_excel_report(listings: list[dict]) -> Path | None:
     report_df = report_df[['Адрес', 'Площадь, кв.м.', 'Цена за кв.м.', 'Итоговая цена', 'Описание', 'Ссылка на объявление', 'Фото']]
     
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    file_path = REPORTS_DIR / f"realty_report_{timestamp}.xlsx"
+    city_part = f"_{city.lower().replace(' ', '_')}" if city else ""
+    file_path = REPORTS_DIR / f"realty_report{city_part}_{timestamp}.xlsx"
     
     # 1. Сохраняем текстовые данные
     report_df.to_excel(file_path, index=False, engine='openpyxl')

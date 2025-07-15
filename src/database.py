@@ -32,6 +32,7 @@ class Listing(Base):
     url = Column(String, nullable=False, unique=True)
     description = Column(String)
     first_seen_date = Column(String, default=lambda: datetime.datetime.now().isoformat())
+    city = Column(String, nullable=False, default="")
 
     # Уникальность по адресу и площади + индекс для быстрого поиска
     __table_args__ = (
@@ -40,7 +41,7 @@ class Listing(Base):
     )
 
     def __repr__(self):
-        return f"<Listing(address='{self.address}', area={self.area})>"
+        return f"<Listing(address='{self.address}', area={self.area}, city='{self.city}')>"
 
 
 # --- Функции для работы с БД ---
@@ -69,7 +70,8 @@ def add_listing(db, ad: dict):
         area=ad['area'],
         price=ad['price'],
         url=ad['url'],
-        description=ad.get('description', '')
+        description=ad.get('description', ''),
+        city=ad.get('city', '')
     )
     db.add(new_listing)
     db.commit()

@@ -55,4 +55,8 @@ SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_SENDER = os.getenv("EMAIL_SENDER", "Andrrrrrew89@ya.ru")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "jpnslnzazyvsebmb")
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "n1xu1@yandex.ru")
+RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "solodim1@ya.ru")
+
+# --- 5. Режим запуска ---
+# Если True — отчёт делается сразу при запуске, если False — работает по расписанию
+RUN_ONCE = True
