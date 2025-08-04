@@ -33,6 +33,10 @@ class Listing(Base):
     description = Column(String)
     first_seen_date = Column(String, default=lambda: datetime.datetime.now().isoformat())
     city = Column(String, nullable=False, default="")
+    # Новые поля для категорий
+    category_id = Column(Integer, nullable=True)
+    category_name = Column(String, nullable=True)
+    category_color = Column(String, nullable=True)
 
     # Уникальность по адресу и площади + индекс для быстрого поиска
     __table_args__ = (
@@ -41,7 +45,7 @@ class Listing(Base):
     )
 
     def __repr__(self):
-        return f"<Listing(address='{self.address}', area={self.area}, city='{self.city}')>"
+        return f"<Listing(address='{self.address}', area={self.area}, city='{self.city}', category='{self.category_name}')>"
 
 
 # --- Функции для работы с БД ---
@@ -71,7 +75,10 @@ def add_listing(db, ad: dict):
         price=ad['price'],
         url=ad['url'],
         description=ad.get('description', ''),
-        city=ad.get('city', '')
+        city=ad.get('city', ''),
+        category_id=ad.get('category_id'),
+        category_name=ad.get('category_name'),
+        category_color=ad.get('category_color')
     )
     db.add(new_listing)
     db.commit()
@@ -101,7 +108,10 @@ if __name__ == '__main__':
                 'area': 100.5,
                 'price': 10000000,
                 'url': 'http://example.com/1',
-                'description': 'Тестовое описание'
+                'description': 'Тестовое описание',
+                'category_id': 7,
+                'category_name': 'Коммерческая недвижимость',
+                'category_color': 'red'
             })
             print("Тестовое объявление успешно добавлено.")
         except Exception as e:

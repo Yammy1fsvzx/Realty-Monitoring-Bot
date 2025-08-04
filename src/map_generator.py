@@ -4,6 +4,9 @@ from geopy.extra.rate_limiter import RateLimiter
 from pathlib import Path
 import time
 import datetime
+import os
+import shutil
+from config import REGIONS_CONFIG
 
 # --- Общие настройки ---
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
@@ -53,14 +56,44 @@ def create_interactive_map(listings: list[dict], city: str = "") -> Path:
     Возвращает путь к созданной карте.
     city: название города (для имени файла)
     """
-    map_center = listings[0]['coords'] if listings else SPB_CENTER_COORDS
+    # Определяем центр карты на основе региона или первого объявления
+    map_center = SPB_CENTER_COORDS
+    if city and city in REGIONS_CONFIG:
+        map_center = REGIONS_CONFIG[city]["center_coords"]
+    elif listings:
+        map_center = listings[0]['coords']
+    
     m = folium.Map(location=map_center, zoom_start=11)
 
+    # Создаем легенду для категорий
+    legend_html = '''
+    <div style="position: fixed;
+                top: 10px;
+                left: 50px;
+                width: 200px;
+                background-color: white;
+                border: 1px solid grey;
+                z-index: 9999;
+                font-size: 14px;
+                padding: 10px;
+                height: 150px;
+                border-radius: 10px">
+    <p><b>Категории недвижимости:</b></p>
+    <p><i class="fa fa-circle" style="color:red"></i> Коммерческая недвижимость</p>
+    <p><i class="fa fa-circle" style="color:green"></i> Земельные участки</p>
+    </div>
+    '''
+    m.get_root().html.add_child(folium.Element(legend_html))
+
     for loc in listings:
+        # Определяем цвет маркера на основе категории
+        marker_color = loc.get('category_color', 'blue')
+        
         folium.Marker(
             location=loc['coords'],
             popup=loc['popup'],
-            tooltip=loc['address']
+            tooltip=loc['address'],
+            icon=folium.Icon(color=marker_color, icon='info-sign')
         ).add_to(m)
 
     REPORTS_DIR.mkdir(exist_ok=True)
@@ -104,12 +137,21 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str 
                     </a>
                 </div>
                 '''
+            
+            # Добавляем информацию о категории в popup
+            category_info = f'<p style="margin: 5px 0; color: {ad.get("category_color", "blue")};"><b>Категория:</b> {ad.get("category_name", "Неизвестно")}</p>'
+            
+            # Определяем правильную единицу измерения площади
+            category_name = ad.get('category_name', '').lower()
+            area_unit = "сотки" if 'земельные' in category_name or 'земельный' in category_name else "м²"
+            
             popup_html = f"""
             <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; width: 450px;">
                 <div style="width: {'50%' if image_html else '100%'}; float: left; padding-right: {'10px' if image_html else '0'}; box-sizing: border-box;">
                     <p style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid #eee;"><b>Адрес:</b> {ad['address']}</p>
-                    <p style="margin: 5px 0 0 0;"><b>Площадь:</b> {ad['area']} м²</p>
-                    <p style="margin: 5px 0;"><b>Цена за м²:</b> {formatted_price_per_sqm}</p>
+                    {category_info}
+                    <p style="margin: 5px 0 0 0;"><b>Площадь:</b> {ad['area']} {area_unit}</p>
+                    <p style="margin: 5px 0;"><b>Цена за {area_unit}:</b> {formatted_price_per_sqm}</p>
                     <p style="margin: 5px 0; font-weight: bold;"><b>Итоговая цена:</b> {formatted_price}</p>
                     <div style="max-height: 80px; overflow-y: auto; margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px;">
                         {description}
@@ -126,7 +168,8 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str 
             listings_with_coords_and_popup.append({
                 "coords": coords_list,
                 "popup": folium.Popup(popup_html, max_width=500),
-                "address": ad['address']
+                "address": ad['address'],
+                "category_color": ad.get('category_color', 'blue')
             })
 
     if not listings_with_coords_and_popup:
@@ -145,29 +188,34 @@ if __name__ == '__main__':
             'area': 150.0, 
             'price_per_sqm': 200000.0, 
             'price': 30000000.0, 
-            'url': 'http://example.com/nevsky'
+            'url': 'http://example.com/nevsky',
+            'category_name': 'Коммерческая недвижимость',
+            'category_color': 'red'
         },
         {
             'address': 'Санкт-Петербург, ул. Рубинштейна, 1', 
             'area': 80.0, 
             'price_per_sqm': 250000.0, 
             'price': 20000000.0, 
-            'url': 'http://example.com/rubinshteina'
+            'url': 'http://example.com/rubinshteina',
+            'category_name': 'Коммерческая недвижимость',
+            'category_color': 'red'
         },
-        { # Пример без точных координат, чтобы проверить геокодер
-            'address': 'Санкт-Петербург, Лиговский проспект, 50', 
-            'area': 100.0, 
-            'price_per_sqm': 180000.0, 
-            'price': 18000000.0, 
-            'url': 'http://example.com/ligovsky',
-            'image_url': '' # <-- нет картинки
+        { # Пример земли
+            'address': 'Ленинградская область, Всеволожский район, д. Кудрово', 
+            'area': 1500.0, 
+            'price_per_sqm': 50000.0, 
+            'price': 75000000.0, 
+            'url': 'http://example.com/kudrovo',
+            'category_name': 'Земельные участки',
+            'category_color': 'green'
         }
     ]
     # В реальном сценарии здесь были бы полные данные от API
     test_all_ads = [
         {'url': 'http://example.com/nevsky', 'address': 'Санкт-Петербург, Невский проспект, 28', 'coords': {'lat': '59.9355', 'lng': '30.3200'}, 'image_url': 'https://via.placeholder.com/150'},
         {'url': 'http://example.com/rubinshteina', 'address': 'Санкт-Петербург, ул. Рубинштейна, 1', 'coords': None, 'image_url': 'https://via.placeholder.com/150'}, # <-- Координат нет
-        {'url': 'http://example.com/ligovsky', 'address': 'Санкт-Петербург, Лиговский проспект, 50', 'coords': None, 'image_url': ''}
+        {'url': 'http://example.com/kudrovo', 'address': 'Ленинградская область, Всеволожский район, д. Кудрово', 'coords': None, 'image_url': ''}
     ]
 
     report_path = create_map_report(test_listings, test_all_ads)

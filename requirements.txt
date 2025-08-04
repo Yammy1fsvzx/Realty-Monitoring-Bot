@@ -6,5 +6,3 @@ SQLAlchemy
 geopy
 xyzservices
 schedule
-xlsxwriter
-Pillow

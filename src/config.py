@@ -24,14 +24,44 @@ FETCH_FOR_YESTERDAY = True
 # --- 2.2. Основные фильтры ---
 CITY_NAME = "Санкт-Петербург"
 
-# ID категории "Коммерческая недвижимость". Установите None для поиска по всем категориям.
-CATEGORY_ID = 7
+# Настройки категорий недвижимости
+# Список категорий для поиска: 7 - коммерческая недвижимость, 5 - земельные участки
+CATEGORIES = [
+    {
+        "id": 7,  # Коммерческая недвижимость
+        "name": "Коммерческая недвижимость",
+        "color": "red",  # Цвет точки на карте
+        "square_min": 60,  # Минимальная площадь в кв.м
+        "square_max": 250,  # Максимальная площадь в кв.м
+        "exclude_keywords": ["ппа", "переуступка", "готовый арендный бизнес"],
+        "exclude_building_types": ["Складское помещение"]
+    },
+    {
+        "id": 5,  # Земельные участки
+        "name": "Земельные участки", 
+        "color": "green",  # Цвет точки на карте
+        "square_min": 10,  # Минимальная площадь в сотках (10 соток)
+        "square_max": 40,  # Максимальная площадь в сотках (40 соток)
+        "exclude_keywords": [],
+        "exclude_building_types": []
+    }
+]
+
 # ID типа "Продам". Установите None для поиска по всем типам.
 NEDVIGIMOST_TYPE = 1
 
-# Площадь объекта (кв.м.)
-SQUARE_MIN = 60
-SQUARE_MAX = 250
+# Настройки поиска по областям
+# Добавляем области к основным городам
+REGIONS_CONFIG = {
+    "Санкт-Петербург": {
+        "cities": ["Санкт-Петербург", "Ленинградская область"],
+        "center_coords": [59.9386, 30.3141]
+    },
+    "Москва": {
+        "cities": ["Москва", "Московская область"], 
+        "center_coords": [55.7558, 37.6176]
+    }
+}
 
 # Слова-исключения для фильтрации по тексту объявления.
 # Скрипт отсеет объявления, содержащие любое из этих слов.
@@ -55,7 +85,7 @@ SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.yandex.ru")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_SENDER = os.getenv("EMAIL_SENDER", "Andrrrrrew89@ya.ru")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "jpnslnzazyvsebmb")
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "solodim1@ya.ru")
+RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "solodim1@ya.ru") #n1xu1@yandex.ru
 
 # --- 5. Режим запуска ---
 # Если True — отчёт делается сразу при запуске, если False — работает по расписанию
