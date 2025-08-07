@@ -6,6 +6,7 @@ import time
 import datetime
 import os
 import shutil
+import html
 from config import REGIONS_CONFIG
 
 # --- Общие настройки ---
@@ -16,6 +17,18 @@ SPB_CENTER_COORDS = [59.9386, 30.3141]
 # Настройка геокодера
 geolocator = Nominatim(user_agent="realty_parser_project/1.0")
 geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+
+def _escape_html(text: str) -> str:
+    """Экранирует HTML-символы для безопасной вставки в HTML."""
+    if not text:
+        return ""
+    return html.escape(text)
+
+def _fix_backslashes(text: str) -> str:
+    """Заменяет обратные слеши на прямые для избежания проблем с JavaScript."""
+    if not text:
+        return ""
+    return text.replace('\\', '/')
 
 def _format_price(price: float) -> str:
     """Форматирует цену в удобный для чтения формат (тыс. или млн. руб)."""
@@ -127,7 +140,7 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str 
         if coords_list:
             formatted_price_per_sqm = _format_price(ad['price_per_sqm'])
             formatted_price = _format_price(ad['price'])
-            description = ad.get('description', '')
+            description = _escape_html(_fix_backslashes(ad.get('description', '')))
             image_html = ''
             if ad.get('image_url'):
                 image_html = f'''
@@ -139,7 +152,7 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str 
                 '''
             
             # Добавляем информацию о категории в popup
-            category_info = f'<p style="margin: 5px 0; color: {ad.get("category_color", "blue")};"><b>Категория:</b> {ad.get("category_name", "Неизвестно")}</p>'
+            category_info = f'<p style="margin: 5px 0; color: {ad.get("category_color", "blue")};"><b>Категория:</b> {_escape_html(ad.get("category_name", "Неизвестно"))}</p>'
             
             # Определяем правильную единицу измерения площади
             category_name = ad.get('category_name', '').lower()
@@ -148,7 +161,7 @@ def create_map_report(listings: list[dict], all_ads_data: list[dict], city: str 
             popup_html = f"""
             <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; width: 450px;">
                 <div style="width: {'50%' if image_html else '100%'}; float: left; padding-right: {'10px' if image_html else '0'}; box-sizing: border-box;">
-                    <p style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid #eee;"><b>Адрес:</b> {ad['address']}</p>
+                    <p style="margin: 0; padding-bottom: 5px; border-bottom: 1px solid #eee;"><b>Адрес:</b> {_escape_html(ad['address'])}</p>
                     {category_info}
                     <p style="margin: 5px 0 0 0;"><b>Площадь:</b> {ad['area']} {area_unit}</p>
                     <p style="margin: 5px 0;"><b>Цена за {area_unit}:</b> {formatted_price_per_sqm}</p>
